@@ -24,6 +24,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'controller_interface_phase1 = tools.controller_interface_phase1:main',
+            'controller_interface_phase2 = tools.controller_interface_phase2:main',
         ],
     },
 )
