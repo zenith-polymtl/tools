@@ -24,6 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'gcs_heartbeat = tools.gcs_heartbeat:main',
         ],
     },
 )

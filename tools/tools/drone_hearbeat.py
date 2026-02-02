@@ -11,17 +11,17 @@ from builtin_interfaces.msg import Time
 
 
 
-class GCSHeartbeat(Node):
+class DroneHeartbeat(Node):
     """
     A node that publishes heartbeat messages at a regular interval.
     """
 
     def __init__(self):
-        super().__init__('gcs_heartbeat')
+        super().__init__('drone_heartbeat')
         
         # Declare parameters
         self.declare_parameter('heartbeat_rate', 1.0)  # Hz
-        self.declare_parameter('topic_name', 'gcs/heartbeat')
+        self.declare_parameter('topic_name', 'drone/heartbeat')
         
         # Get parameters
         heartbeat_rate = self.get_parameter('heartbeat_rate').value
@@ -55,9 +55,6 @@ class GCSHeartbeat(Node):
 
 
 def main(args=None):
-    """
-    Main entry point for the heartbeat node.
-    """
     rclpy.init(args=args)
     
     heartbeat_node = GCSHeartbeat()
