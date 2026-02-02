@@ -8,7 +8,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String, Bool
 from builtin_interfaces.msg import Time
-
+from custom_interfaces.msg import DroneHealth
 
 
 class DroneHeartbeat(Node):
@@ -29,7 +29,12 @@ class DroneHeartbeat(Node):
         
         # Create publisher
         self.publisher_ = self.create_publisher(Bool, topic_name, 10)
-        
+        self.mavros_sub = self.create_subscription(Bool, 'mavros/heartbeat', self.mavros_callback, 10)
+        self.zed_sub = self.create_subscription(Bool, 'zed/heartbeat', self.zed_callback, 10)
+
+        self.mavros_up = False
+        self.zed_up = False
+
         # Create timer
         timer_period = 1.0 / heartbeat_rate
         self.timer = self.create_timer(timer_period, self.timer_callback)
@@ -38,13 +43,30 @@ class DroneHeartbeat(Node):
         
         self.get_logger().info(f'GCS Heartbeat node started - publishing at {heartbeat_rate} Hz on {topic_name}')
 
+    def mavros_callback(self, msg):
+        """
+        Callback function for MAVROS heartbeat subscription.
+        """
+        self.get_logger().debug('Received MAVROS heartbeat message.')
+        if msg.data:
+            pass
+    
+    def zed_callback(self, msg):
+        """
+        Callback function for ZED heartbeat subscription.
+        """
+        self.get_logger().debug('Received ZED heartbeat message.')
+        if msg.data:
+            pass
+
     def timer_callback(self):
         """
         Callback function for the timer - publishes heartbeat message.
         """
         
-        msg = Bool()
-        msg.data = True
+        msg = DroneHealth()
+        msg.zed_healthy = self.zed_up
+        msg.mavros_healthy = self.mavros_up
         
         self.publisher_.publish(msg)
         self.heartbeat_count += 1
@@ -57,7 +79,7 @@ class DroneHeartbeat(Node):
 def main(args=None):
     rclpy.init(args=args)
     
-    heartbeat_node = GCSHeartbeat()
+    heartbeat_node = DroneHeartbeat()
     
     try:
         rclpy.spin(heartbeat_node)
