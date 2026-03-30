@@ -9,6 +9,7 @@ from rclpy.node import Node
 from std_msgs.msg import String, Bool
 from builtin_interfaces.msg import Time
 from custom_interfaces.msg import DroneHealth
+from rclpy.qos import QoSProfile, ReliabilityPolicy
 
 
 class DroneHeartbeat(Node):
@@ -19,6 +20,9 @@ class DroneHeartbeat(Node):
     def __init__(self):
         super().__init__('drone_heartbeat')
         
+        reliable_qos = QoSProfile(depth=10)
+        reliable_qos.reliability = ReliabilityPolicy.RELIABLE
+        
         # Declare parameters
         self.declare_parameter('heartbeat_rate', 1.0)  # Hz
         self.declare_parameter('topic_name', 'drone/heartbeat')
@@ -28,7 +32,7 @@ class DroneHeartbeat(Node):
         topic_name = self.get_parameter('topic_name').value
         
         # Create publisher
-        self.publisher_ = self.create_publisher(Bool, topic_name, 10)
+        self.publisher_ = self.create_publisher(DroneHealth, topic_name, reliable_qos)
         self.mavros_sub = self.create_subscription(Bool, 'mavros/heartbeat', self.mavros_callback, 10)
         self.zed_sub = self.create_subscription(Bool, 'zed/heartbeat', self.zed_callback, 10)
 
