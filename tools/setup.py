@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'gcs_heartbeat = tools.gcs_heartbeat:main',
+            'drone_heartbeat = tools.drone_heartbeat:main',
         ],
     },
 )
