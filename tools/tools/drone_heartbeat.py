@@ -10,6 +10,8 @@ from std_msgs.msg import String, Bool
 from builtin_interfaces.msg import Time
 from custom_interfaces.msg import DroneHealth
 from rclpy.qos import QoSProfile, ReliabilityPolicy
+from mavros_msgs.msg import State
+from zed_msgs.msg import Heartbeat
 
 
 class DroneHeartbeat(Node):
@@ -36,8 +38,8 @@ class DroneHeartbeat(Node):
         
         # Create publisher
         self.hearthbeath_publisher_ = self.create_publisher(DroneHealth, topic_name, reliable_qos)
-        self.mavros_sub = self.create_subscription(Bool, 'mavros/heartbeat', self.mavros_callback, 10)
-        self.zed_sub = self.create_subscription(Bool, 'zed/heartbeat', self.zed_callback, 10)
+        self.mavros_sub = self.create_subscription(State, '/mavros/state', self.mavros_callback, 10)
+        self.zed_sub = self.create_subscription(Heartbeat, '/zed/zed_node/status/heartbeat', self.zed_callback, 10)
 
         self.mavros_up = False
         self.zed_up = False
@@ -52,13 +54,16 @@ class DroneHeartbeat(Node):
         self.heartbeat_count = 0
         self.get_logger().info(f'GCS Heartbeat node started - publishing at {heartbeat_rate} Hz on {topic_name}')
 
-    def mavros_callback(self, msg):
+    def mavros_callback(self, msg:State):
         """Update the timestamp whenever a message is received."""
-        self.last_mavros_time = self.get_clock().now()
+        if msg.connected:
+            self.last_mavros_time = self.get_clock().now()
+
     
-    def zed_callback(self, msg):
+    def zed_callback(self, msg:Heartbeat):
         """Update the timestamp whenever a message is received."""
-        self.last_zed_time = self.get_clock().now()        
+        self.last_zed_time = self.get_clock().now()    
+    
     
     def check_health(self):
         """Calculates health based on time elapsed since the last heartbeat."""
@@ -67,7 +72,7 @@ class DroneHeartbeat(Node):
         # Calculate time since last messages in seconds
         mavros_delta = (now - self.last_mavros_time).nanoseconds / 1e9
         zed_delta = (now - self.last_zed_time).nanoseconds / 1e9
-
+        
         # If time since last message is within threshold, component is healthy
         self.mavros_up = mavros_delta < self.timeout_threshold
         self.zed_up = zed_delta < self.timeout_threshold
