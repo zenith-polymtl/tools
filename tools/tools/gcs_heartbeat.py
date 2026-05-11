@@ -21,7 +21,7 @@ class GCSHeartbeat(Node):
         
         # Declare parameters
         self.declare_parameter('heartbeat_rate', 1.0)  # Hz
-        self.declare_parameter('topic_name', 'gcs/heartbeat')
+        self.declare_parameter('topic_name', '/aeac/external/gcs/heartbeat')
         
         # Get parameters
         heartbeat_rate = self.get_parameter('heartbeat_rate').value
