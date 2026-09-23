@@ -4,8 +4,8 @@ package_name = 'tools'
 
 setup(
     name=package_name,
-    version='0.0.0',
-    packages=find_packages(exclude=['test']),
+    version='1.0.0',
+    packages=find_packages(),
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
@@ -13,15 +13,10 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='root',
-    maintainer_email='root@todo.todo',
-    description='TODO: Package description',
-    license='TODO: License declaration',
-    extras_require={
-        'test': [
-            'pytest',
-        ],
-    },
+    maintainer='Colin Cormier',
+    maintainer_email='colinc131@gmail.com',
+    description='Shared ROS 2 utilities for Zenith mission repos: topic names, heartbeats',
+    license='Apache-2.0',
     entry_points={
         'console_scripts': [
             'gcs_heartbeat = tools.gcs_heartbeat:main',

@@ -9,6 +9,8 @@ from rclpy.node import Node
 from std_msgs.msg import String, Bool
 from builtin_interfaces.msg import Time
 
+from tools import topics
+
 
 
 class GCSHeartbeat(Node):
@@ -21,7 +23,7 @@ class GCSHeartbeat(Node):
         
         # Declare parameters
         self.declare_parameter('heartbeat_rate', 1.0)  # Hz
-        self.declare_parameter('topic_name', '/aeac/external/gcs/heartbeat')
+        self.declare_parameter('topic_name', topics.GCS_HEARTBEAT)
         
         # Get parameters
         heartbeat_rate = self.get_parameter('heartbeat_rate').value
@@ -36,7 +38,7 @@ class GCSHeartbeat(Node):
         
         self.heartbeat_count = 0
         
-        self.get_logger().info(f'GCS Heartbeat node started - publishing at {heartbeat_rate} Hz on {topic_name}')
+        self.get_logger().info(f'Heartbeat GCS démarré : publication à {heartbeat_rate} Hz sur {topic_name}')
 
     def timer_callback(self):
         """

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-GCS Heartbeat Node
-Publishes periodic heartbeat messages to indicate the ground control station is alive.
+Drone Heartbeat Node
+Publishes periodic health messages to indicate the drone and its sensors are alive.
 """
 
 import rclpy
@@ -12,6 +12,8 @@ from custom_interfaces.msg import DroneHealth
 from rclpy.qos import QoSProfile, ReliabilityPolicy
 from mavros_msgs.msg import State
 from zed_msgs.msg import Heartbeat
+
+from tools import topics
 
 
 class DroneHeartbeat(Node):
@@ -29,7 +31,7 @@ class DroneHeartbeat(Node):
         # Declare parameters
         self.declare_parameter('heartbeat_rate', 1.0)  # Hz
         self.declare_parameter('timeout_threshold', 2.0) # Seconds before we consider a node "dead"
-        self.declare_parameter('topic_name', 'drone/heartbeat')
+        self.declare_parameter('topic_name', topics.DRONE_HEALTH)
         
         # Get parameters
         heartbeat_rate = self.get_parameter('heartbeat_rate').value
@@ -52,7 +54,7 @@ class DroneHeartbeat(Node):
         self.timer = self.create_timer(timer_period, self.timer_callback)
         
         self.heartbeat_count = 0
-        self.get_logger().info(f'GCS Heartbeat node started - publishing at {heartbeat_rate} Hz on {topic_name}')
+        self.get_logger().info(f'Heartbeat drone démarré : publication à {heartbeat_rate} Hz sur {topic_name}')
 
     def mavros_callback(self, msg:State):
         """Update the timestamp whenever a message is received."""
