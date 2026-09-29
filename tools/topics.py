@@ -1,8 +1,8 @@
-"""Table des noms de topics des dépôts de mission Zenith."""
+"""Table des noms de topics des repos de mission Zenith."""
 
 # Un nom de topic s'écrit ici et nulle part ailleurs.
 # Le deuxième segment décide seul de ce qui traverse la radio.
-# On ajoute une ligne par PR dans ce dépôt.
+# On ajoute une ligne par PR dans ce repo.
 
 EXTERNAL = '/aeac/external'   # traverse la radio (Zenoh)
 INTERNAL = '/aeac/internal'   # reste sur la machine

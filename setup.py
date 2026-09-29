@@ -13,7 +13,7 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='Colin Cormier',
+    maintainer='Colin Rousseau',
     maintainer_email='colinc131@gmail.com',
     description='Shared ROS 2 utilities for Zenith mission repos: topic names, heartbeats',
     license='Apache-2.0',
