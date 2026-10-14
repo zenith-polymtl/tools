@@ -15,12 +15,13 @@ setup(
     zip_safe=True,
     maintainer='Colin Rousseau',
     maintainer_email='colinc131@gmail.com',
-    description='Shared ROS 2 utilities for Zenith mission repos: topic names, heartbeats',
+    description='Shared ROS 2 utilities for Zenith mission repos: topic names, heartbeats, RC switches',
     license='Apache-2.0',
     entry_points={
         'console_scripts': [
             'gcs_heartbeat = tools.gcs_heartbeat:main',
             'drone_heartbeat = tools.drone_heartbeat:main',
+            'remote_control_interface = tools.remote_control_interface:main',
         ],
     },
 )
