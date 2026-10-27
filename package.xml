@@ -3,7 +3,7 @@
 <package format="3">
   <name>tools</name>
   <version>1.0.0</version>
-  <description>Shared ROS 2 utilities for Zenith mission repos: topic names, heartbeats, RC switches</description>
+  <description>Shared ROS 2 utilities for Zenith mission repos: topic names, heartbeats, RC switches, Google Drive hand-in (drive_uploader)</description>
   <maintainer email="colinc131@gmail.com">Colin Rousseau</maintainer>
   <license>Apache-2.0</license>
 
@@ -13,6 +13,9 @@
   <depend>mavros_msgs</depend>
   <depend>custom_interfaces</depend>
   <depend>zed_msgs</depend>
+
+  <!-- Exception à la règle « pas de tests » : les validateurs de la remise sur le Drive (test/, doc/drive_uploader.md) -->
+  <test_depend>python3-pytest</test_depend>
 
   <export>
     <build_type>ament_python</build_type>

@@ -23,3 +23,5 @@ TRAFFIC = f'{INTERNAL}/comp/traffic'                          # TrafficArray, le
 COMP_STATUS = f'{EXTERNAL}/comp/status'                       # CompStatus, état du client du serveur de compétition (hexa_ws comp_client), à chaque paquet envoyé
 COMP_TELEMETRY_ACK = f'{EXTERNAL}/comp/telemetry_ack'         # CompTelemetryAck, accusé du serveur : insideBoundary, tooCloseToTraffic (hexa_ws comp_client)
 COMP_INFRACTION = f'{EXTERNAL}/comp/infraction'               # CompInfraction, totaux d'infractions et score du serveur (hexa_ws comp_client)
+DRIVE_SUBMIT = f'{EXTERNAL}/drive/submit'                     # DriveSubmit, valider ou remettre un fichier de la Phase 2 sur le Google Drive de l'équipe (drive_uploader)
+DRIVE_STATUS = f'{EXTERNAL}/drive/status'                     # DriveStatus, réponse de drive_uploader à chaque étape d'une demande
