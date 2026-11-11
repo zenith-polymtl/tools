@@ -23,3 +23,6 @@ TRAFFIC = f'{INTERNAL}/comp/traffic'                          # TrafficArray, le
 COMP_STATUS = f'{EXTERNAL}/comp/status'                       # CompStatus, état du client du serveur de compétition (hexa_ws comp_client), à chaque paquet envoyé
 COMP_TELEMETRY_ACK = f'{EXTERNAL}/comp/telemetry_ack'         # CompTelemetryAck, accusé du serveur : insideBoundary, tooCloseToTraffic (hexa_ws comp_client)
 COMP_INFRACTION = f'{EXTERNAL}/comp/infraction'               # CompInfraction, totaux d'infractions et score du serveur (hexa_ws comp_client)
+GIMBAL_RC_IN = f'{INTERNAL}/gimbal/rc_in'    # RCIn, canaux de la manette du caméraman (rc_receiver)
+GIMBAL_CMD = f'{INTERNAL}/gimbal/cmd'        # GimbalCommand, vitesses + action (gimbal_rc_interface) -> gimbal_driver
+GIMBAL_STATE = f'{EXTERNAL}/gimbal/state'    # GimbalState, état du D80 (gimbal_driver), vu par le sol
