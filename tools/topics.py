@@ -32,4 +32,5 @@ NAV_INTENT = f'{INTERNAL}/nav/intent'                         # NavIntent latche
 NAV_PILOT_VELOCITY = f'{INTERNAL}/nav/pilot_velocity'         # VelocityIntent à 20 Hz, vitesse demandée par le pilote (pilot_nav) -> guidance
 GUIDANCE_STATUS = f'{INTERNAL}/nav/guidance_status'           # GuidanceStatus à 10 Hz (guidance) -> nodes de mode, state_machine_t1
 GUIDANCE_SUMMARY = f'{EXTERNAL}/nav/guidance_status'          # GuidanceStatus à 1 Hz (guidance) -> UI de la GCS
-SEARCH_COMPLETED = f'{INTERNAL}/mission/search_completed'     # Bool latched, fin du survey et des repassages (search_nav) -> state_machine_t1
+NAV_COMPLETED = f'{INTERNAL}/mission/nav_completed'           # NavMode latched, fin d'un mode de navigation -> state_machine_t1
+RC_NAV_MODE = f'{INTERNAL}/rc/nav_mode'                       # NavMode latched, mode de navigation demandé par la manette (remote_control_interface) -> state_machine_t1
