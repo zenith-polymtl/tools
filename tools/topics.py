@@ -28,9 +28,9 @@ DRIVE_STATUS = f'{EXTERNAL}/drive/status'                     # DriveStatus, ré
 
 # --- Navigation de la Tâche 1 (aeac-2027, context_research/architecure/Task-1/guidance.md) ---
 NAV_MODE = f'{INTERNAL}/nav/mode'                             # NavMode latched, mode de navigation actif (state_machine_t1) -> nodes de mode, guidance
+NAV_COMPLETED = f'{INTERNAL}/mission/nav_completed'           # NavMode latched, fin d'un mode de navigation -> state_machine_t1
+RC_NAV_MODE = f'{INTERNAL}/rc/nav_mode'                       # NavMode latched, mode de navigation demandé par la manette (remote_control_interface) -> state_machine_t1
 NAV_INTENT = f'{INTERNAL}/nav/intent'                         # NavIntent latched, chemin à suivre, une fois par chemin (laps_nav, search_nav, return_nav) -> guidance
 NAV_PILOT_VELOCITY = f'{INTERNAL}/nav/pilot_velocity'         # VelocityIntent à 20 Hz, vitesse demandée par le pilote (pilot_nav) -> guidance
 GUIDANCE_STATUS = f'{INTERNAL}/nav/guidance_status'           # GuidanceStatus à 10 Hz (guidance) -> nodes de mode, state_machine_t1
 GUIDANCE_SUMMARY = f'{EXTERNAL}/nav/guidance_status'          # GuidanceStatus à 1 Hz (guidance) -> UI de la GCS
-NAV_COMPLETED = f'{INTERNAL}/mission/nav_completed'           # NavMode latched, fin d'un mode de navigation -> state_machine_t1
-RC_NAV_MODE = f'{INTERNAL}/rc/nav_mode'                       # NavMode latched, mode de navigation demandé par la manette (remote_control_interface) -> state_machine_t1
