@@ -6,6 +6,7 @@
 
 EXTERNAL = '/aeac/external'   # traverse la radio (Zenoh)
 INTERNAL = '/aeac/internal'   # reste sur la machine
+GCS = '/aeac/gcs'             # reste au sol : nodes du portable et interface de la GCS
 
 # --- Externes : vus par le sol ---
 GCS_HEARTBEAT = f'{EXTERNAL}/gcs/heartbeat'
@@ -33,3 +34,19 @@ NAV_PILOT_VELOCITY = f'{INTERNAL}/nav/pilot_velocity'         # VelocityIntent �
 GUIDANCE_STATUS = f'{INTERNAL}/nav/guidance_status'           # GuidanceStatus à 10 Hz (guidance) -> nodes de mode, state_machine_t1
 GUIDANCE_SUMMARY = f'{EXTERNAL}/nav/guidance_status'          # GuidanceStatus à 1 Hz (guidance) -> UI de la GCS
 SEARCH_COMPLETED = f'{INTERNAL}/mission/search_completed'     # Bool latched, fin du survey et des repassages (search_nav) -> state_machine_t1
+
+# --- Interface de la GCS (aeac-2027 workspaces/gcs_ws/gcs_ui, simulés dans src/ros/mock.ts) ---
+DRONE_STATUS = f'{EXTERNAL}/drone/status'                     # état du drone pour la barre d'état, 1 Hz -> UI
+DRONE_POSITION = f'{EXTERNAL}/drone/position'                 # position du drone pour la carte, 5 Hz -> UI
+MISSION_STATUS = f'{EXTERNAL}/mission/status'                 # avancement de la mission, 1 Hz (state machine) -> UI
+MISSION_GEOMETRY = f'{EXTERNAL}/mission/geometry'             # géométrie de la mission (zones, tours), latched -> UI
+TASK2_STATUS = f'{EXTERNAL}/task2/status'                     # état des échantillons de la Tâche 2, 1 Hz -> UI
+IMAGE_REQUEST = f'{EXTERNAL}/camera/image_request'            # service, une image HD de la caméra du drone -> UI
+GCS_TRAFFIC = f'{GCS}/traffic'                                # trafic du serveur AEAC renvoyé au sol, 1 Hz -> UI
+GCS_CLUSTERS = f'{GCS}/clusters'                              # cerfs regroupés (clustering, portable) -> UI
+GCS_REPORT_STATUS = f'{GCS}/report/status'                    # état du rapport de la Tâche 1 (report_builder) -> UI
+GCS_TRACK = f'{GCS}/track'                                    # trajet du tracker de la Tâche 2 -> UI
+GCS_REVIEW_DEER = f'{GCS}/deer/review'                        # service, l'opérateur valide ou rejette un cerf
+GCS_ADD_ANOMALY = f'{GCS}/report/add_anomaly'                 # service, une anomalie ajoutée au rapport
+GCS_SUBMIT_REPORT = f'{GCS}/report/submit'                    # service, envoi du rapport de la Tâche 1
+GCS_SUBMIT_TRACK = f'{GCS}/track/submit'                      # service, envoi du CSV du suivi de la Tâche 2
