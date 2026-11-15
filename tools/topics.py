@@ -52,3 +52,8 @@ GCS_REVIEW_DEER = f'{GCS}/deer/review'                        # service, l'opér
 GCS_ADD_ANOMALY = f'{GCS}/report/add_anomaly'                 # service, une anomalie ajoutée au rapport
 GCS_SUBMIT_REPORT = f'{GCS}/report/submit'                    # service, envoi du rapport de la Tâche 1
 GCS_SUBMIT_TRACK = f'{GCS}/track/submit'                      # service, envoi du CSV du suivi de la Tâche 2
+
+# --- Gimbal D-80AI (mount ArduPilot, MNT1_TYPE=9 + lua/mount-xf-d80-driver.lua ; hexa_ws gimbal_driver) ---
+GIMBAL_RC_IN = f'{INTERNAL}/gimbal/rc_in'                     # RCIn, canaux de la manette du caméraman (rc_receiver)
+GIMBAL_CMD = f'{INTERNAL}/gimbal/cmd'                         # GimbalCommand, vitesses + action (gimbal_rc_interface) -> gimbal_mavros
+GIMBAL_STATE = f'{EXTERNAL}/gimbal/state'                     # GimbalState, état du D80, vu par le sol (personne ne le publie encore)
