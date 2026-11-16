@@ -1,6 +1,6 @@
 # Les interrupteurs de la manette : `remote_control_interface`
 
-Ce node fait le lien entre les interrupteurs de la manette du pilote et le code de mission. Il sert à bouger un servo (caméra, pince, verrou) ou à lancer une action (le GO, un largage, une photo) d'un geste sur la manette.
+Ce node fait le lien entre les interrupteurs de la manette du pilote et le code de mission. Il sert à bouger un servo (caméra, pince, verrou), à lancer une action (le GO, un largage, une photo) d'un geste sur la manette, ou à choisir le mode de navigation (tours, ou reprise en main `PILOT`).
 
 On ne touche jamais au code du node. Tout se règle dans `config/<mission>.yaml`, section `remote_control_interface`.
 
@@ -125,6 +125,24 @@ Par défaut, le déclenchement se fait quand `feu` passe en HIGH. Pour une autre
 
 `PHOTO`, `SAMPLE` et `TRACKER_RELEASE` sont des exemples : ils doivent exister dans `topics.py` (voir le cas 2).
 
+## Cas 4 : choisir le mode de navigation
+
+Un interrupteur dit à la machine d'état de la mission quel mode de navigation le pilote demande. En bas ou au milieu, `PILOT` (le pilote vole aux manches, à travers la Jetson) ; en haut, `LAPS` (les tours).
+
+```yaml
+    switches: [mode]
+    mode:
+      channel: 8                         # canal 9 de la manette
+      nav_modes: [PILOT, PILOT, LAPS]    # le mode demandé en LOW, MIDDLE, HIGH
+```
+
+Le node publie `custom_interfaces/NavMode` sur le topic de `RC_NAV_MODE`, en latched. On écrit le nom d'une constante de `NavMode` (`PILOT`, `LAPS`, `SEARCH`, `RETURN`) ; `''` veut dire « rien », `NONE` est refusé.
+
+- **C'est un état, pas une action** : comme un servo, le mode de la position est publié dès la première lecture, puis à chaque changement de position. La machine d'état sait donc, avant le décollage, quel mode le pilote veut à la fin du décollage.
+- **Un seul interrupteur** peut avoir `nav_modes`, et jamais avec `trigger`.
+- **Ce n'est pas le mode de vol d'ArduPilot.** Le node ne le change pas ; le passage à `PILOT` est immédiat, et c'est la machine d'état qui décide d'accepter les autres modes.
+- **Manette perdue ou valeur absurde** : un PWM à 0 ou hors de 800 à 2200 est ignoré. Le node ne publie rien, il n'invente jamais de mode.
+
 ## Tout ensemble
 
 Plusieurs interrupteurs, chacun sa section. Un même interrupteur peut bouger un servo **et** lancer une action : `servo`, `pwm` et `events` dans la même section.
@@ -143,9 +161,9 @@ remote_control_interface:
 
 ## À savoir
 
-- **Au démarrage**, le node lit la position de chaque interrupteur. Il règle les servos sur cette position, mais ne lance aucune action, même si un interrupteur est déjà en haut. Il faut le bouger.
+- **Au démarrage**, le node lit la position de chaque interrupteur. Il règle les servos et publie le mode de navigation de cette position, mais ne lance aucune action, même si un interrupteur est déjà en haut. Il faut le bouger.
 - **Une action part au changement de position**, pas tant que l'interrupteur y reste. Laisser `go` en HIGH n'envoie le GO qu'une fois.
-- **Le node ne change jamais de mode de vol et n'arme jamais.** C'est le pilote (règle de `ARCHITECTURE.md`).
+- **Le node ne change jamais de mode de vol et n'arme jamais.** C'est le pilote (règle de `ARCHITECTURE.md`). Le mode de navigation (`nav_modes`) est un état interne au code, pas un mode d'ArduPilot.
 - **Les mêmes canaux dans deux missions ne posent pas de problème** : chaque mission a son yaml.
 
 ## Tester sans drone
@@ -165,6 +183,10 @@ make rc            # terminal 2 : le clavier simule la manette
 
 Les logs du node disent ce qui se passe : `go : HIGH`, puis `go : publication sur /aeac/external/mission/go`. Pour voir le topic lui-même : `make echo T=/aeac/external/mission/go`.
 
+Pour le mode : `mode : HIGH`, puis `mode : mode LAPS demandé sur /aeac/internal/rc/nav_mode`. La demande : `make echo T=/aeac/internal/rc/nav_mode` ; le mode retenu par la machine d'état : `make echo T=/aeac/internal/nav/mode`.
+
+En SITL, mavros publie aussi sur `/mavros/rc/in` les canaux du SITL lui-même. Si un canal du SITL n'est pas à la valeur de `make rc`, les deux sources alternent et le node voit l'interrupteur bouger sans cesse (logs `mode : HIGH`, `mode : LOW`… en rafale). Vérifier d'abord, sans `make rc`, la valeur du canal dans `make echo T=/mavros/rc/in`.
+
 ## Tous les réglages
 
 | Réglage | Où | Obligatoire | Rôle |
@@ -178,6 +200,7 @@ Les logs du node disent ce qui se passe : `go : HIGH`, puis `go : publication su
 | `events` | section d'un interrupteur | non | Trois constantes de `tools/topics.py` (ou `''`) : LOW, MIDDLE, HIGH |
 | `trigger` | section d'un interrupteur | non | Nom de l'interrupteur qui déclenche ; demande `events` |
 | `trigger_position` | section d'un interrupteur | non (HIGH) | Position du déclencheur qui lance l'action |
+| `nav_modes` | section d'un interrupteur | non | Trois constantes de `NavMode` (ou `''`) : LOW, MIDDLE, HIGH, publiées sur `RC_NAV_MODE` ; un seul interrupteur |
 
 ## Quand ça ne marche pas
 
@@ -187,6 +210,9 @@ Les logs du node disent ce qui se passe : `go : HIGH`, puis `go : publication su
 | `Config invalide : ... n'est pas une constante de tools.topics` | Faute de frappe dans `events`, ou constante pas encore ajoutée à `topics.py` |
 | `Config invalide : ... pwm doit donner 3 valeurs` | `servo` est donné, mais `pwm` n'a pas exactement trois valeurs |
 | `Config invalide : ... trigger ... absent de switches` | Le déclencheur n'est pas dans la liste `switches` |
+| `Config invalide : ... n'est pas un mode de NavMode` | Faute de frappe dans `nav_modes`, ou `NONE` |
+| `Config invalide : nav_modes sur plusieurs interrupteurs` | Deux interrupteurs choisissent le mode : un seul |
+| `PWM ... hors de [800, 2200], ignoré` (WARN) | Valeur absurde sur ce canal : manette ou récepteur à vérifier |
 | `Interface manette démarrée sans interrupteur` (WARN) | Pas de `switches` dans le yaml : normal tant que la mission n'en a pas |
 | `service ... absent, servo non commandé` (WARN) | Le node payload ne tourne pas |
 | `déclenché, mais rien à faire pour X en MIDDLE` (WARN) | Le sélecteur est sur une position où `events` vaut `''` |

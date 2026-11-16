@@ -2,7 +2,8 @@
 """
 Remote Control Interface Node
 Turns the switches of the pilot's RC transmitter (/mavros/rc/in) into mission actions:
-a servo position, or a Bool published on a topic of tools.topics.
+a servo position, a Bool published on a topic of tools.topics, or the navigation mode requested
+by the pilot (NavMode on topics.RC_NAV_MODE, read by the mission state machine).
 
 Everything is set in config/<mission>.yaml, under the node's name:
 
@@ -10,7 +11,7 @@ Everything is set in config/<mission>.yaml, under the node's name:
       ros__parameters:
         threshold_low: 1300            # PWM below = LOW, above threshold_high = HIGH, else MIDDLE
         threshold_high: 1700
-        switches: [camera, action, trigger]
+        switches: [camera, action, trigger, mode]
         camera:
           channel: 12                  # index in RCIn.channels (0 = channel 1)
           servo: 13                    # servo_num sent to the ServoState service
@@ -21,11 +22,17 @@ Everything is set in config/<mission>.yaml, under the node's name:
           trigger: trigger             # optional: publish only when switch `trigger` goes HIGH
         trigger:
           channel: 7
+        mode:
+          channel: 8
+          nav_modes: [PILOT, PILOT, LAPS]   # NavMode constants for LOW, MIDDLE, HIGH ('' = nothing)
 
 A switch with `events` and no `trigger` publishes Bool(True) when it moves to a position.
 A switch with a `trigger` publishes the event of its current position when the trigger
 switch moves to `trigger_position` (HIGH by default). The first reading after startup sets
-the servos to the switch position and publishes nothing.
+the servos to the switch position and publishes no event.
+A switch with `nav_modes` (one at most) is a state, like a servo: the mode of its position is
+published (latched) at the first reading and at each change. A PWM outside [PWM_MIN, PWM_MAX]
+(0 = no signal) is ignored: a lost or garbled transmitter never invents a mode.
 
 Guide for the team, in French: doc/remote_control_interface.md
 """
@@ -33,15 +40,19 @@ Guide for the team, in French: doc/remote_control_interface.md
 import rclpy
 from rcl_interfaces.msg import ParameterDescriptor
 from rclpy.node import Node
-from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
+from rclpy.qos import QoSDurabilityPolicy, QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 from std_msgs.msg import Bool
 from mavros_msgs.msg import RCIn
+from custom_interfaces.msg import NavMode
 from custom_interfaces.srv import ServoState
 
 from tools import topics
 
 RC_IN = '/mavros/rc/in'
 POSITIONS = ('LOW', 'MIDDLE', 'HIGH')
+PWM_MIN, PWM_MAX = 800, 2200   # a switch reads 1000 to 2000; outside: no signal (0) or garbage, ignored
+# Latched: the state machine gets the last requested mode even if it starts after this node
+LATCHED = QoSProfile(depth=1, durability=QoSDurabilityPolicy.TRANSIENT_LOCAL)
 
 
 class RemoteControlInterface(Node):
@@ -62,6 +73,9 @@ class RemoteControlInterface(Node):
 
         event_topics = {t for s in self.switches.values() for t in s['events'].values() if t}
         self.event_pubs = {t: self.create_publisher(Bool, t, qos_re) for t in event_topics}
+        self.nav_mode_pub = None
+        if any(s['nav_modes'] for s in self.switches.values()):
+            self.nav_mode_pub = self.create_publisher(NavMode, topics.RC_NAV_MODE, LATCHED)
 
         self.servo_cli = None
         if any(s['servo'] >= 0 for s in self.switches.values()):
@@ -84,6 +98,7 @@ class RemoteControlInterface(Node):
             self.declare_parameter(p + 'servo', -1)
             self.declare_optional(p + 'pwm')
             self.declare_optional(p + 'events')
+            self.declare_optional(p + 'nav_modes')
             self.declare_parameter(p + 'trigger', '')
             self.declare_parameter(p + 'trigger_position', 'HIGH')
 
@@ -100,6 +115,12 @@ class RemoteControlInterface(Node):
                 raise ValueError(f'interrupteur {name} : events doit donner 3 valeurs (LOW, MIDDLE, HIGH)')
             events = [self.resolve_topic(name, e) for e in events]
 
+            nav_modes = list(self.get_parameter(p + 'nav_modes').value or [])
+            if nav_modes and len(nav_modes) != 3:
+                raise ValueError(f'interrupteur {name} : nav_modes doit donner 3 valeurs (LOW, MIDDLE, HIGH)')
+            for m in nav_modes:
+                self.check_nav_mode(name, m)
+
             trigger_position = self.get_parameter(p + 'trigger_position').value
             if trigger_position not in POSITIONS:
                 raise ValueError(f'interrupteur {name} : trigger_position doit être LOW, MIDDLE ou HIGH')
@@ -109,6 +130,7 @@ class RemoteControlInterface(Node):
                 'servo': servo,
                 'pwm': dict(zip(POSITIONS, pwm)),
                 'events': dict(zip(POSITIONS, events)),
+                'nav_modes': dict(zip(POSITIONS, nav_modes)),   # NavMode constant name or ''; {} when none
                 'trigger': self.get_parameter(p + 'trigger').value,
                 'trigger_position': trigger_position,
             }
@@ -118,6 +140,11 @@ class RemoteControlInterface(Node):
                 raise ValueError(f'interrupteur {name} : trigger {s["trigger"]} absent de switches')
             if s['trigger'] and not any(s['events'].values()):
                 raise ValueError(f'interrupteur {name} : trigger sans events')
+            if s['trigger'] and s['nav_modes']:
+                raise ValueError(f'interrupteur {name} : nav_modes ne se combine pas avec trigger')
+        mode_switches = [name for name, s in switches.items() if s['nav_modes']]
+        if len(mode_switches) > 1:
+            raise ValueError(f'nav_modes sur plusieurs interrupteurs ({", ".join(mode_switches)}) : un seul choisit le mode')
         return switches
 
     def declare_optional(self, name):
@@ -133,13 +160,27 @@ class RemoteControlInterface(Node):
             raise ValueError(f'interrupteur {switch} : {constant} n\'est pas une constante de tools.topics')
         return topic
 
+    def check_nav_mode(self, switch, constant):
+        """'' (nothing) or the name of a NavMode constant (PILOT, LAPS...). NONE is refused: the pilot
+        asks for a mode, never for nothing."""
+        if not constant:
+            return
+        if not constant.isupper() or constant == 'NONE' or not isinstance(getattr(NavMode, constant, None), int):
+            raise ValueError(f'interrupteur {switch} : {constant} n\'est pas un mode de NavMode (PILOT, LAPS, SEARCH, RETURN)')
+
     def rc_callback(self, msg):
         # All positions are updated before any action, so a trigger reads its selector's new position
         changes = []
         for name, s in self.switches.items():
-            if s['channel'] >= len(msg.channels) or msg.channels[s['channel']] == 0:
-                continue   # channel absent or no signal on it
-            position = self.get_switch_state(msg.channels[s['channel']])
+            if s['channel'] >= len(msg.channels):
+                continue   # channel absent
+            pwm = msg.channels[s['channel']]
+            if not PWM_MIN <= pwm <= PWM_MAX:
+                if pwm:   # 0 = no signal on it, normal on an unused channel
+                    self.get_logger().warn(f'{name} : PWM {pwm} hors de [{PWM_MIN}, {PWM_MAX}], ignoré',
+                                           throttle_duration_sec=5.0)
+                continue
+            position = self.get_switch_state(pwm)
             previous = self.last_position[name]
             if position != previous:
                 self.last_position[name] = position
@@ -164,6 +205,8 @@ class RemoteControlInterface(Node):
 
         if s['servo'] >= 0:
             self.send_servo(name, position)
+        if s['nav_modes'] and s['nav_modes'][position]:
+            self.publish_nav_mode(name, s['nav_modes'][position])
         if first:
             return
 
@@ -182,6 +225,13 @@ class RemoteControlInterface(Node):
     def publish_event(self, name, topic):
         self.get_logger().info(f'{name} : publication sur {topic}')
         self.event_pubs[topic].publish(Bool(data=True))
+
+    def publish_nav_mode(self, name, constant):
+        msg = NavMode()
+        msg.header.stamp = self.get_clock().now().to_msg()
+        msg.mode = getattr(NavMode, constant)
+        self.get_logger().info(f'{name} : mode {constant} demandé sur {topics.RC_NAV_MODE}')
+        self.nav_mode_pub.publish(msg)
 
     def send_servo(self, name, position):
         if not self.servo_cli.service_is_ready():
