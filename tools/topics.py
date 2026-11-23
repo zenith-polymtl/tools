@@ -14,6 +14,7 @@ DRONE_HEALTH = f'{EXTERNAL}/drone/health'
 DEMO_STATE = f'{EXTERNAL}/demo/state'
 MISSION_GO = f'{EXTERNAL}/mission/go'   # le GO du sol (nav_stack init)
 PAYLOAD_SET_STATE = f'{EXTERNAL}/payload/set_state'   # service ServoState, un servo à un PWM (remote_control_interface)
+TRACKER_STATUS = f'{EXTERNAL}/tracker/status'   # TrackerStatus, état du tracker de la Tâche 2 (tracker)
 
 # --- Internes : drone seulement ---
 LINK_OK = f'{INTERNAL}/link_ok'
