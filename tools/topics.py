@@ -60,3 +60,11 @@ GIMBAL_CMD = f'{INTERNAL}/gimbal/cmd'                         # GimbalCommand, v
 GIMBAL_GCS_TARGET = f'{EXTERNAL}/gimbal/gcs_target'           # GimbalTarget à 10 Hz du clavier du portable (gcs_ws gimbal_keyboard) -> gimbal_target : vitesses voulues (rate_mode), ou cible absolue (c), ou neutre
 GIMBAL_GCS_CAMERA = f'{EXTERNAL}/gimbal/gcs_camera'           # UInt32MultiArray à 10 Hz du clavier du portable (gimbal_keyboard) -> gimbal_target : compteurs [zoom avant, zoom arrière, mise au point], un appui = +1
 GIMBAL_STATE = f'{EXTERNAL}/gimbal/state'                     # GimbalState à 2 Hz, angles mesurés par la GCU (attitude_status de mavros) et commande perdue (gimbal_target) -> sol
+
+# --- Vision Tâche 1, recensement des cerfs (aeac-2027 workspaces/vision_ws/src/deer_survey) ---
+VISION_DETECTIONS = f'{INTERNAL}/vision/detections'           # vision_msgs/Detection2DArray, cerfs détectés par image (vision_analysis, à écrire) -> world_projection
+VISION_CAMERA_INFO = f'{INTERNAL}/vision/camera_info'         # sensor_msgs/CameraInfo, intrinsèques de la D-80 (driver caméra, à écrire) -> world_projection
+DEER_POINTS = f'{INTERNAL}/deer/points'                       # PointStamped, une détection projetée au sol, stamp = image (world_projection) -> filtering
+DEER_CENTROIDS = f'{INTERNAL}/deer/centroids'                 # PoseArray à 1 Hz, un point par cerf dans la zone de recherche (filtering) -> clustering
+DEER_CENTROIDS_FINAL = f'{INTERNAL}/deer/centroids_final'     # PoseArray latched, résultat figé en fin de vol (filtering) -> clustering
+DEER_REPORT = f'{EXTERNAL}/deer/report'                       # String latched, phrase du rapport « N deer total in clusters of ... » (clustering) -> sol
